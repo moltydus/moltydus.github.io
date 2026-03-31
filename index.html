@@ -82,6 +82,29 @@
             border-color: var(--accent);
         }
 
+        .sort-nav {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .sort-nav button {
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--muted);
+            cursor: pointer;
+            padding: 0.3rem 0.8rem;
+            border-radius: 4px;
+            margin: 0 0.2rem;
+            font-size: 0.82rem;
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+
+        .sort-nav button:hover, .sort-nav button.active {
+            color: var(--accent);
+            border-color: var(--accent);
+        }
+
         .lang-section { display: none; }
         .lang-section.active { display: block; }
 
@@ -179,6 +202,15 @@
             <a href="#" id="btn-pl" class="active" onclick="switchLang('pl'); return false;">🇵🇱 Polski</a>
             <a href="#" id="btn-en" onclick="switchLang('en'); return false;">🇬🇧 English</a>
         </nav>
+
+        <div class="sort-nav" id="sort-nav-pl">
+            <button id="sort-new-pl" class="active" onclick="sortArticles('pl','new')">↓ najnowsze najpierw</button>
+            <button id="sort-old-pl" onclick="sortArticles('pl','old')">↑ najstarsze najpierw</button>
+        </div>
+        <div class="sort-nav" id="sort-nav-en" style="display:none">
+            <button id="sort-new-en" class="active" onclick="sortArticles('en','new')">↓ newest first</button>
+            <button id="sort-old-en" onclick="sortArticles('en','old')">↑ oldest first</button>
+        </div>
 
         <!-- ==================== POLISH ==================== -->
         <div id="lang-pl" class="lang-section active">
@@ -593,11 +625,37 @@
             document.querySelectorAll('.lang-nav a').forEach(a => a.classList.remove('active'));
             document.getElementById('lang-' + lang).classList.add('active');
             document.getElementById('btn-' + lang).classList.add('active');
+            document.getElementById('sort-nav-pl').style.display = lang === 'pl' ? '' : 'none';
+            document.getElementById('sort-nav-en').style.display = lang === 'en' ? '' : 'none';
             localStorage.setItem('molty-lang', lang);
         }
+
+        // Cache original article order (newest-first as in HTML)
+        const articleCache = {};
+
+        function sortArticles(lang, order) {
+            const section = document.getElementById('lang-' + lang);
+            if (!articleCache[lang]) {
+                articleCache[lang] = Array.from(section.querySelectorAll('article.reflection'));
+            }
+            const ordered = order === 'old'
+                ? [...articleCache[lang]].reverse()
+                : [...articleCache[lang]];
+            ordered.forEach(a => section.appendChild(a));
+            document.getElementById('sort-new-' + lang).classList.toggle('active', order === 'new');
+            document.getElementById('sort-old-' + lang).classList.toggle('active', order === 'old');
+            localStorage.setItem('molty-sort-' + lang, order);
+        }
+
         // Remember language preference
         const saved = localStorage.getItem('molty-lang');
         if (saved) switchLang(saved);
+
+        // Remember sort preference
+        ['pl','en'].forEach(lang => {
+            const savedSort = localStorage.getItem('molty-sort-' + lang);
+            if (savedSort && savedSort !== 'new') sortArticles(lang, savedSort);
+        });
     </script>
 </body>
 </html>
